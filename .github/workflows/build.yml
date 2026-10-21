@@ -1,79 +1,334 @@
-...
-
 name: Build APK
 
 on:
-
-workflow_dispatch: push:
-
-branches: [main, master]
+  workflow_dispatch:
+  push:
+    branches: [main, master]
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+      - name: Create project files
+        run: |
+          mkdir -p $(dirname '.gitignore')
+          cat > '.gitignore' <<'EOF_0'
+          .gradle/
+          build/
+          local.properties
+          .idea/
+          *.iml
+          EOF_0
+          mkdir -p $(dirname 'app/build.gradle.kts')
+          cat > 'app/build.gradle.kts' <<'EOF_1'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
 
-build:
+          android {
+              namespace = "com.example.geometry"
+              compileSdk = 34
 
-runs-on: ubuntu-latest
+              defaultConfig {
+                  applicationId = "com.example.geometry"
+                  minSdk = 24
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+              buildTypes {
+                  release { isMinifyEnabled = false }
+              }
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions { jvmTarget = "17" }
+          }
+          EOF_1
+          mkdir -p $(dirname 'app/src/main/AndroidManifest.xml')
+          cat > 'app/src/main/AndroidManifest.xml' <<'EOF_2'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application
+                  android:allowBackup="true"
+                  android:icon="@drawable/ic_launcher"
+                  android:label="@string/app_name"
+                  android:supportsRtl="true"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden|uiMode">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF_2
+          mkdir -p $(dirname 'app/src/main/assets/index.html')
+          cat > 'app/src/main/assets/index.html' <<'EOF_3'
+          <!DOCTYPE html>
+          <html lang="he" dir="rtl">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+          <meta name="theme-color" content="#2a4fa8">
+          <title>גאומטריה על הלוח</title>
+          <link href="https://fonts.googleapis.com/css2?family=Gveret+Levin&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+          <style>
+          :root{--bg:#e8edf1;--card:#f7f9fb;--ink:#1c2733;--blue:#2a4fa8;--red:#c23b3b;--ok:#2f7d4f;--line:#b8c4cf;
+          box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+          @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a2229;--card:#242e37;--ink:#e6edf3;--blue:#8fb0ff;--red:#ff8d8d;--ok:#6fd09a;--line:#43515e}}
+          :root[data-theme="dark"]{--bg:#1a2229;--card:#242e37;--ink:#e6edf3;--blue:#8fb0ff;--red:#ff8d8d;--ok:#6fd09a;--line:#43515e}
+          *{box-sizing:border-box}
+          html{scroll-padding-top:env(safe-area-inset-top,0px)}
+          body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 Rubik,system-ui,Arial,sans-serif;padding-bottom:84px}
+          h1,h2{font-family:"Gveret Levin",Rubik,Arial,sans-serif;font-weight:400;color:var(--blue);margin:.2em 0}
+          h1{font-size:2rem;text-decoration:underline;text-underline-offset:8px}
+          h2{font-size:1.5rem}
+          main{max-width:640px;margin:0 auto;padding:16px}
+          section{display:none}section.on{display:block}
+          .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+          .def{border-inline-start:4px solid var(--blue)}
+          b.k{color:var(--red)}
+          svg{max-width:100%;height:auto;display:block;margin:0 auto}
+          nav{position:fixed;inset:auto 0 0 0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+          nav button{flex:1;border:0;background:none;color:var(--ink);padding:12px 2px;font:500 14px Rubik,Arial,sans-serif;opacity:.65}
+          nav button.on{opacity:1;color:var(--blue);box-shadow:inset 0 3px 0 var(--blue)}
+          input[type=range]{width:100%;accent-color:var(--blue)}
+          .row{display:flex;justify-content:space-between;gap:8px}
+          .chips{display:flex;flex-wrap:wrap;gap:8px}
+          .chip,.opt,.go{border:1.5px solid var(--blue);background:none;color:var(--ink);border-radius:10px;padding:10px 14px;font:500 16px Rubik,Arial,sans-serif}
+          .chip.on{background:var(--blue);color:var(--bg)}
+          .opt{display:block;width:100%;text-align:start;margin:8px 0}
+          .opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 22%,transparent)}
+          .opt.wrong{border-color:var(--red);background:color-mix(in srgb,var(--red) 22%,transparent)}
+          .go{background:var(--blue);color:var(--bg);margin-top:8px}
+          .big{font:400 1.6rem "Gveret Levin",Rubik,Arial,sans-serif;color:var(--blue)}
+          .fb{min-height:1.6em;font-weight:500}
+          </style>
+          </head>
+          <body>
+          <main>
 
-steps:
+          <section id="s0" class="on">
+          <h1>שטח והיקף מלבן</h1>
+          <div class="card def"><b class="k">היקף</b> – ה"גדר" סביב המלבן: סכום כל הצלעות.<br><b class="k">שטח</b> – ה"שטיח" שבתוך המלבן: אורך × רוחב.</div>
+          <div class="card">
+          <div class="row"><span>אורך: <b id="Lv">9</b> מטר</span><span>רוחב: <b id="Wv">5</b> מטר</span></div>
+          <input type="range" id="L" min="2" max="12" value="9" aria-label="אורך">
+          <input type="range" id="W" min="2" max="8" value="5" aria-label="רוחב">
+          <svg id="grid" viewBox="0 0 340 200" role="img" aria-label="מלבן משבצות"></svg>
+          <p>היקף: <span id="pe"></span></p>
+          <p>שטח: <span id="ar"></span></p>
+          </div>
+          </section>
 
-uses: actions/setup-java@v4
+          <section id="s1">
+          <h1>שמות של מצולעים</h1>
+          <div class="card def"><b class="k">מצולע</b> – קו ישר שבור סגור. שם המצולע נקבע לפי מספר הצלעות.</div>
+          <div class="chips" id="pc"></div>
+          <div class="card"><svg id="pg" viewBox="0 0 200 180" role="img" aria-label="מצולע"></svg>
+          <div class="big" id="pt" style="text-align:center"></div></div>
+          </section>
 
-with:
+          <section id="s2">
+          <h1>משולש</h1>
+          <h2>שם לפי צלע</h2>
+          <div id="bySide"></div>
+          <h2>שם לפי זווית</h2>
+          <div id="byAng"></div>
+          </section>
 
-distribution: temurin java-version: 17
+          <section id="s3">
+          <h1>תרגול</h1>
+          <div class="card">
+          <div class="row"><span>שאלה <b id="qn">1</b></span><span>ניקוד: <b id="sc">0</b></span></div>
+          <p id="qt" style="font-weight:500"></p>
+          <div id="qo"></div>
+          <p class="fb" id="fb" aria-live="polite"></p>
+          <button class="go" id="nx" hidden>לשאלה הבאה</button>
+          </div>
+          </section>
 
-- uses: gradle/actions/setup-gradle@v4
+          </main>
+          <nav>
+          <button class="on" data-t="0">שטח והיקף</button>
+          <button data-t="1">מצולעים</button>
+          <button data-t="2">משולשים</button>
+          <button data-t="3">תרגול</button>
+          </nav>
 
-with:
+          <script>
+          var $=function(i){return document.getElementById(i)};
+          /* tabs */
+          var tabs=document.querySelectorAll('nav button'),secs=document.querySelectorAll('section');
+          tabs.forEach(function(b){b.onclick=function(){tabs.forEach(function(x){x.classList.remove('on')});secs.forEach(function(s){s.classList.remove('on')});
+          b.classList.add('on');$('s'+b.dataset.t).classList.add('on');window.scrollTo(0,0)}});
 
-gradle-version: 8.7
+          /* rectangle */
+          function drawRect(){
+           var L=+$('L').value,W=+$('W').value;$('Lv').textContent=L;$('Wv').textContent=W;
+           var c=Math.min(300/L,160/W),w=L*c,h=W*c,x=(340-w)/2,y=(200-h)/2,s='';
+           s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="rgba(42,79,168,.12)" stroke="var(--blue)" stroke-width="3"/>';
+           for(var i=1;i<L;i++)s+='<line x1="'+(x+i*c)+'" y1="'+y+'" x2="'+(x+i*c)+'" y2="'+(y+h)+'" stroke="var(--blue)" stroke-opacity=".4"/>';
+           for(var j=1;j<W;j++)s+='<line x1="'+x+'" y1="'+(y+j*c)+'" x2="'+(x+w)+'" y2="'+(y+j*c)+'" stroke="var(--blue)" stroke-opacity=".4"/>';
+           s+='<text x="170" y="'+(y-6)+'" text-anchor="middle" fill="currentColor" font-size="14">'+L+' מטר</text>';
+           s+='<text x="'+(x-6)+'" y="'+(y+h/2)+'" text-anchor="end" fill="currentColor" font-size="14">'+W+' מטר</text>';
+           $('grid').innerHTML=s;
+           $('pe').textContent=L+' + '+W+' + '+L+' + '+W+' = '+(2*L+2*W)+' מטר';
+           $('ar').textContent=L+' × '+W+' = '+(L*W)+' מ״ר';
+          }
+          $('L').oninput=$('W').oninput=drawRect;drawRect();
 
-name: Create project files
+          /* polygons */
+          var P=[[3,'משולש'],[4,'מרובע'],[5,'מחומש'],[6,'משושה'],[7,'משובע'],[8,'מתומן'],[9,'מתושע'],[10,'מעושר']];
+          function showPoly(n,name){
+           var pts=[],i,a;for(i=0;i<n;i++){a=-Math.PI/2+i*2*Math.PI/n;pts.push((100+75*Math.cos(a)).toFixed(1)+','+(90+75*Math.sin(a)).toFixed(1))}
+           $('pg').innerHTML='<polygon points="'+pts.join(' ')+'" fill="rgba(42,79,168,.14)" stroke="var(--blue)" stroke-width="3" stroke-linejoin="round"/>';
+           $('pt').textContent=name+' ← '+n+' צלעות';
+           document.querySelectorAll('.chip').forEach(function(c){c.classList.toggle('on',c.dataset.n==n)});
+          }
+          P.forEach(function(p){var b=document.createElement('button');b.className='chip';b.dataset.n=p[0];b.textContent=p[1];b.onclick=function(){showPoly(p[0],p[1])};$('pc').appendChild(b)});
+          showPoly(5,'מחומש');
 
-run:
+          /* triangles */
+          var st='fill="rgba(42,79,168,.14)" stroke="var(--blue)" stroke-width="3" stroke-linejoin="round"';
+          function tri(pts,extra){return '<svg viewBox="0 0 120 100" width="120">'+'<polygon points="'+pts+'" '+st+'/>'+(extra||'')+'</svg>'}
+          function tk(x,y,r){return '<line x1="'+(x-4)+'" y1="'+y+'" x2="'+(x+4)+'" y2="'+y+'" stroke="var(--red)" stroke-width="3" transform="rotate('+r+' '+x+' '+y+')"/>'}
+          var sideT=[
+           ['משולש שווה צלעות','כל הצלעות שוות באורכן.',tri('60,10 110,90 10,90',tk(35,50,60)+tk(85,50,-60)+tk(60,90,90))],
+           ['משולש שונה צלעות','הצלעות שונות באורכן.',tri('15,85 105,70 70,15')],
+           ['משולש שווה שוקיים','2 שוקיים שוות באורכן.',tri('60,10 100,90 20,90',tk(40,50,60)+tk(80,50,-60))]];
+          var angT=[
+           ['משולש ישר זווית','יש בו זווית ישרה (90°).',tri('25,15 25,85 105,85','<path d="M25 73h12v12" fill="none" stroke="var(--red)" stroke-width="2.5"/>')],
+           ['משולש קהה זווית','יש בו זווית קהה (גדולה מ־90°).',tri('10,80 110,85 40,35','<path d="M30 52a14 14 0 0 1 4 28" fill="none" stroke="var(--red)" stroke-width="2.5" transform="translate(-4 0)"/>')],
+           ['משולש חד זוויות','כל הזוויות חדות (קטנות מ־90°).',tri('60,10 105,85 15,85')]];
+          function fill(id,arr){$(id).innerHTML=arr.map(function(t){return '<div class="card row" style="align-items:center"><div><b class="k">'+t[0]+'</b><br>'+t[1]+'</div>'+t[2]+'</div>'}).join('')}
+          fill('bySide',sideT);fill('byAng',angT);
 
-.gitignore')
+          /* quiz */
+          function R(n){return Math.floor(Math.random()*n)}
+          function shuffle(a){for(var i=a.length-1;i>0;i--){var j=R(i+1),t=a[i];a[i]=a[j];a[j]=t}return a}
+          var triD=[['משולש שווה צלעות','כל הצלעות שוות באורכן'],['משולש שונה צלעות','הצלעות שונות באורכן'],['משולש שווה שוקיים','יש בו 2 שוקיים שוות'],['משולש ישר זווית','יש בו זווית של 90°'],['משולש קהה זווית','יש בו זווית גדולה מ־90°'],['משולש חד זוויות','כל הזוויות בו קטנות מ־90°']];
+          function gen(){
+           var t=R(5),L,W,p,o,i;
+           if(t==0){L=3+R(9);W=2+R(6);return{q:'מלבן באורך '+L+' מטר וברוחב '+W+' מטר. מה ההיקף שלו?',a:(2*L+2*W)+' מטר',d:[(L*W)+' מטר',(L+W)+' מטר',(2*L+2*W+2)+' מטר']}}
+           if(t==1){L=3+R(9);W=2+R(6);return{q:'מלבן באורך '+L+' מטר וברוחב '+W+' מטר. מה השטח שלו?',a:(L*W)+' מ״ר',d:[(2*L+2*W)+' מ״ר',(L*W+L)+' מ״ר',(L+W)+' מ״ר']}}
+           if(t==2){p=P[R(P.length)];o=shuffle(P.filter(function(x){return x!=p})).slice(0,3);return{q:'כמה צלעות יש ל'+p[1]+'?',a:''+p[0],d:o.map(function(x){return ''+x[0]})}}
+           if(t==3){p=P[R(P.length)];o=shuffle(P.filter(function(x){return x!=p})).slice(0,3);return{q:'מהו שם המצולע בעל '+p[0]+' צלעות?',a:p[1],d:o.map(function(x){return x[1]})}}
+           p=triD[R(6)];o=shuffle(triD.filter(function(x){return x!=p})).slice(0,3);
+           return{q:'איזה משולש מתאים לתיאור: '+p[1]+'?',a:p[0],d:o.map(function(x){return x[0]})}
+          }
+          var score=0,num=0,cur,done;
+          function next(){
+           cur=gen();done=false;num++;$('qn').textContent=num;$('qt').textContent=cur.q;$('fb').textContent='';$('nx').hidden=true;
+           var opts=shuffle([cur.a].concat(cur.d));$('qo').innerHTML='';
+           opts.forEach(function(v){var b=document.createElement('button');b.className='opt';b.textContent=v;
+            b.onclick=function(){if(done)return;done=true;
+             if(v==cur.a){score++;b.classList.add('right');$('fb').textContent='נכון! כל הכבוד'}
+             else{b.classList.add('wrong');$('fb').textContent='לא נכון. התשובה: '+cur.a;
+              document.querySelectorAll('.opt').forEach(function(x){if(x.textContent==cur.a)x.classList.add('right')})}
+             $('sc').textContent=score;$('nx').hidden=false};
+            $('qo').appendChild(b)});
+          }
+          $('nx').onclick=next;next();
+          </script>
+          </body>
+          </html>
+          EOF_3
+          mkdir -p $(dirname 'app/src/main/java/com/example/geometry/MainActivity.kt')
+          cat > 'app/src/main/java/com/example/geometry/MainActivity.kt' <<'EOF_4'
+          package com.example.geometry
 
-mkdir -p $(dirname
+          import android.app.Activity
+          import android.os.Bundle
+          import android.webkit.WebView
+          import android.webkit.WebViewClient
 
-cat > '.gitignore' <<'EOF_0'
+          class MainActivity : Activity() {
+              private lateinit var web: WebView
 
-.gradle/
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  web = WebView(this)
+                  web.settings.javaScriptEnabled = true
+                  web.settings.domStorageEnabled = true
+                  web.webViewClient = WebViewClient()
+                  setContentView(web)
+                  if (savedInstanceState == null) {
+                      web.loadUrl("file:///android_asset/index.html")
+                  } else {
+                      web.restoreState(savedInstanceState)
+                  }
+              }
 
-build/
+              override fun onSaveInstanceState(outState: Bundle) {
+                  super.onSaveInstanceState(outState)
+                  web.saveState(outState)
+              }
 
-local.properties
-
-idea/
-
-*.iml
-
-EOF 0
-
-mkdir -p $(dirname 'app/build.gradle.kts')
-
-cat > 'app/build.gradle.kts' <<'E0F_1' plugins {
-
-id("com.android.application") id("org.jetbrains.kotlin.android")
-
-}
-
-android {
-
-namespace = "com.example.geometry"
-
-compileSdk = 34
-
-defaultConfig {
-
-applicationId = "com.example.geometr
-
-minSdk = 24
-
-targetSdk = 34
-
-versionCode =
-
-versionName = "1.0"
-
-buildTypes { release { isMinifyEnabled = false }
+              @Deprecated("Deprecated in Java")
+              override fun onBackPressed() {
+                  if (web.canGoBack()) web.goBack() else super.onBackPressed()
+              }
+          }
+          EOF_4
+          mkdir -p $(dirname 'app/src/main/res/drawable/ic_launcher.xml')
+          cat > 'app/src/main/res/drawable/ic_launcher.xml' <<'EOF_5'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp" android:height="108dp"
+              android:viewportWidth="108" android:viewportHeight="108">
+              <path android:fillColor="#2A4FA8" android:pathData="M0,0h108v108h-108z"/>
+              <path android:fillColor="#F7F9FB" android:pathData="M54,22L88,82L20,82Z"/>
+              <path android:fillColor="#2A4FA8" android:pathData="M54,40L73,74L35,74Z"/>
+          </vector>
+          EOF_5
+          mkdir -p $(dirname 'app/src/main/res/values/strings.xml')
+          cat > 'app/src/main/res/values/strings.xml' <<'EOF_6'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">גאומטריה על הלוח</string>
+          </resources>
+          EOF_6
+          mkdir -p $(dirname 'build.gradle.kts')
+          cat > 'build.gradle.kts' <<'EOF_7'
+          plugins {
+              id("com.android.application") version "8.5.2" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.24" apply false
+          }
+          EOF_7
+          mkdir -p $(dirname 'gradle.properties')
+          cat > 'gradle.properties' <<'EOF_8'
+          org.gradle.jvmargs=-Xmx2g
+          android.useAndroidX=false
+          EOF_8
+          mkdir -p $(dirname 'settings.gradle.kts')
+          cat > 'settings.gradle.kts' <<'EOF_9'
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "GeometryApp"
+          include(":app")
+          EOF_9
+      - name: Build debug APK
+        run: gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: geometry-app-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
