@@ -1,0 +1,79 @@
+...
+
+name: Build APK
+
+on:
+
+workflow_dispatch: push:
+
+branches: [main, master]
+
+jobs:
+
+build:
+
+runs-on: ubuntu-latest
+
+steps:
+
+uses: actions/setup-java@v4
+
+with:
+
+distribution: temurin java-version: 17
+
+- uses: gradle/actions/setup-gradle@v4
+
+with:
+
+gradle-version: 8.7
+
+name: Create project files
+
+run:
+
+.gitignore')
+
+mkdir -p $(dirname
+
+cat > '.gitignore' <<'EOF_0'
+
+.gradle/
+
+build/
+
+local.properties
+
+idea/
+
+*.iml
+
+EOF 0
+
+mkdir -p $(dirname 'app/build.gradle.kts')
+
+cat > 'app/build.gradle.kts' <<'E0F_1' plugins {
+
+id("com.android.application") id("org.jetbrains.kotlin.android")
+
+}
+
+android {
+
+namespace = "com.example.geometry"
+
+compileSdk = 34
+
+defaultConfig {
+
+applicationId = "com.example.geometr
+
+minSdk = 24
+
+targetSdk = 34
+
+versionCode =
+
+versionName = "1.0"
+
+buildTypes { release { isMinifyEnabled = false }
